@@ -218,7 +218,14 @@ function BuyerDashboard() {
   const [pendingOrder, setPendingOrder] = useState(null);
   const loadInventory = useCallback(async()=>{
     setInvLoading(true);
-    try{setInventory((await getInventory()).items);}catch(e){console.error(e);}finally{setInvLoading(false);}
+    try {
+      const data = await getInventory();
+      setInventory(data?.items || []);
+    } catch (error) {
+      console.error("Failed to load inventory", error);
+    } finally {
+      setInvLoading(false);
+    }
   },[]);
   useEffect(()=>{
     loadInventory();
@@ -287,7 +294,7 @@ function CookDashboard() {
   const [error, setError] = useState(null);
   const load = useCallback(async()=>{
     setLoading(true);setError(null);
-    try{setRecipes((await getRecipes(cuisine||null,6)).recipes);}
+    try{const data = await getRecipes(cuisine||null,6); setRecipes(data?.recipes || []);}
     catch(e){setError("No recipes found. Add items to inventory first.");setRecipes([]);}
     finally{setLoading(false);}
   },[cuisine]);
