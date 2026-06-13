@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const api = axios.create({ baseURL: "https://kitchen-ai-production-2814.up.railway.app/api/v1" });
+const api = axios.create({ baseURL: "https://kitchen-ai-e44g.onrender.com/api/v1" });
 
 export const transcribeAudio = async (file) => {
   const form = new FormData();
