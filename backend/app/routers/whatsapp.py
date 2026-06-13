@@ -80,7 +80,11 @@ def send_whatsapp_reply(to: str, message: str):
     if not account_sid or not auth_token:
         print("⚠️ Twilio credentials not set — skipping WhatsApp reply")
         return
-
+    try:
+        client = TwilioClient(account_sid, auth_token)
+        client.messages.create(body=message, from_=from_number, to=to)
+    except Exception as e:
+        print(f"⚠️ WhatsApp reply failed (limit reached?): {e}")
     client = TwilioClient(account_sid, auth_token)
     client.messages.create(body=message, from_=from_number, to=to)
 
