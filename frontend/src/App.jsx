@@ -381,6 +381,8 @@ function SisterInterface({kitchenCode,onLeave}) {
   const [orders,setOrders]=useState([]);
   const [recipes,setRecipes]=useState([]);
   const [cuisine,setCuisine]=useState("");
+  const [vegFilter,setVegFilter]=useState(null); // null=all, true=veg, false=nonveg
+  const [assignedRecipes,setAssignedRecipes]=useState(new Set()); // track sent recipes
   const [loading,setLoading]=useState(false);
   const [copied,setCopied]=useState(false);
   const [videoPanel,setVideoPanel]=useState(null);
@@ -388,13 +390,16 @@ function SisterInterface({kitchenCode,onLeave}) {
 
   const shareLink=`${window.location.origin}?code=${kitchenCode}`;
   const loadOrders=useCallback(async()=>{try{setOrders((await getKitchenOrders(kitchenCode)).orders||[]);}catch(e){};},[kitchenCode]);
-  const loadRecipes=useCallback(async()=>{setLoading(true);try{setRecipes((await getRecipes(cuisine||null,8)).recipes||[]);}catch(e){setRecipes([]);}finally{setLoading(false);};},[cuisine]);
+  const loadRecipes=useCallback(async()=>{setLoading(true);try{setRecipes((await getRecipes(cuisine||null,8,vegFilter)).recipes||[]);}catch(e){setRecipes([]);}finally{setLoading(false);};},[cuisine,vegFilter]);
 
   useEffect(()=>{loadOrders();const p=setInterval(loadOrders,5000);return()=>clearInterval(p);},[loadOrders]);
   useEffect(()=>{if(tab==="recipes")loadRecipes();},[tab,loadRecipes]);
 
   const handleConfirm=async(id)=>{await confirmKitchenOrder(kitchenCode,id);await loadOrders();};
   const handleAssign=async(recipe,video)=>{
+    const key=`${recipe.name}-${video?.video_id}`;
+    if(assignedRecipes.has(key)) return; // prevent duplicate sends
+    setAssignedRecipes(prev=>new Set([...prev,key]));
     await assignRecipe(kitchenCode,{recipe_name:recipe.name,youtube_url:video?.video_id?`https://www.youtube.com/watch?v=${video.video_id}`:recipe.youtube_video?.url,youtube_title:video?.title||recipe.youtube_video?.title,channel:video?.channel||recipe.youtube_video?.channel});
     setToast(`"${recipe.name}" sent to your cook! 👩‍🍳`);setTimeout(()=>setToast(""),3000);setVideoPanel(null);
   };
@@ -470,7 +475,12 @@ function SisterInterface({kitchenCode,onLeave}) {
         {tab==="pantry"&&<PantryView readOnly={false}/>}
 
         {tab==="recipes"&&(
-          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{display:"flex",gap:8,marginBottom:2}}>
+              {[[null,"🍽 All"],[true,"🟢 Veg only"],[false,"🍗 Non-veg"]].map(([val,label])=>(
+                <button key={String(val)} onClick={()=>setVegFilter(val)} style={{flex:1,padding:"9px",borderRadius:10,border:`1.5px solid ${vegFilter===val?(val===true?"#16a34a":val===false?"#dc2626":BG):GR2}`,background:vegFilter===val?(val===true?"#f0fdf4":val===false?"#fff1f2":BG):WH,color:vegFilter===val?(val===true?"#16a34a":val===false?"#dc2626":Y):TX2,fontWeight:vegFilter===val?700:500,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
+              ))}
+            </div>
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
               {cuisines.map(c=>(
                 <button key={c} onClick={()=>setCuisine(c)} style={{padding:"8px 18px",borderRadius:99,border:`1.5px solid ${cuisine===c?BG:GR2}`,background:cuisine===c?BG:WH,color:cuisine===c?Y:TX2,fontWeight:cuisine===c?700:500,fontSize:13,cursor:"pointer",fontFamily:"inherit",transition:"all .15s",boxShadow:cuisine===c?"0 2px 8px rgba(0,0,0,.2)":"none"}}>{c||"All cuisines"}</button>

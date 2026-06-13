@@ -25,15 +25,14 @@ export const addInventoryBulk = async (items) => {
 };
 
 export const removeInventoryItem = async (itemName) => {
-  const { data } = await api.delete("/inventory/remove", {
-    data: { item: itemName },
-  });
+  const { data } = await api.delete("/inventory/remove", { data: { item: itemName } });
   return data;
 };
 
-export const getRecipes = async (cuisine = null, max = 6) => {
+export const getRecipes = async (cuisine = null, max = 6, vegOnly = null) => {
   const params = { max_recipes: max };
   if (cuisine) params.cuisine = cuisine;
+  if (vegOnly !== null) params.veg_only = vegOnly;
   const { data } = await api.get("/recipes", { params });
   return data;
 };
@@ -48,7 +47,6 @@ export const confirmPurchase = async (orderId) => {
   return data;
 };
 
-// Kitchen API
 export const createKitchen = async (name = "My Kitchen") => {
   const { data } = await api.post("/kitchen/create", { name });
   return data;
@@ -84,9 +82,9 @@ export const getAssignedRecipe = async (code) => {
   return data;
 };
 
-export const searchRecipeVideos = async (recipe, cuisine = "Indian", maxResults = 6) => {
+export const searchRecipeVideos = async (recipe, cuisine = "Indian", maxResults = 6, vegOnly = false) => {
   const { data } = await api.get("/youtube/search", {
-    params: { recipe, cuisine, max_results: maxResults }
+    params: { recipe, cuisine, max_results: maxResults, veg_only: vegOnly }
   });
   return data;
 };
