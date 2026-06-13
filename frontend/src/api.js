@@ -83,3 +83,10 @@ export const getAssignedRecipe = async (code) => {
   const { data } = await api.get(`/kitchen/${code}/assigned-recipe`);
   return data;
 };
+
+export const searchRecipeVideos = async (recipe, cuisine = "Indian", maxResults = 6) => {
+  const { data } = await api.get("/youtube/search", {
+    params: { recipe, cuisine, max_results: maxResults }
+  });
+  return data;
+};
