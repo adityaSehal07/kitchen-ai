@@ -78,28 +78,55 @@ function VideoModal({video,onClose,onAssign,showAssign}) {
 function VideoSearchPanel({recipe,cuisine,onAssign,showAssign,onClose}) {
   const [videos,setVideos]=useState([]);
   const [loading,setLoading]=useState(true);
+  const [loadingMore,setLoadingMore]=useState(false);
   const [sortBy,setSortBy]=useState("views");
   const [selected,setSelected]=useState(null);
+  const [nextPage,setNextPage]=useState(null);
+  const [sending,setSending]=useState(false); // prevent double send
 
   useEffect(()=>{
-    searchRecipeVideos(recipe,cuisine,6).then(d=>setVideos(d.videos||[])).catch(()=>{}).finally(()=>setLoading(false));
+    setLoading(true);
+    searchRecipeVideos(recipe,cuisine,12)
+      .then(d=>{setVideos(d.videos||[]);setNextPage(d.next_page_token||null);})
+      .catch(()=>{})
+      .finally(()=>setLoading(false));
   },[recipe,cuisine]);
+
+  const loadMore=async()=>{
+    if(!nextPage||loadingMore) return;
+    setLoadingMore(true);
+    try{
+      const d=await searchRecipeVideos(recipe,cuisine,12);
+      // deduplicate
+      const existingIds=new Set(videos.map(v=>v.video_id));
+      const newVids=(d.videos||[]).filter(v=>!existingIds.has(v.video_id));
+      setVideos(prev=>[...prev,...newVids]);
+      setNextPage(d.next_page_token||null);
+    }catch(e){}finally{setLoadingMore(false);}
+  };
+
+  const handleSend=async(v)=>{
+    if(sending) return;
+    setSending(true);
+    try{ await onAssign(v); }
+    finally{ setTimeout(()=>setSending(false),2000); }
+  };
 
   const sorted=[...videos].sort((a,b)=>sortBy==="views"?b.view_count-a.view_count:b.like_count-a.like_count);
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:1000,display:"flex",flexDirection:"column"}} onClick={onClose}>
-      <div style={{marginTop:"auto",background:WH,borderRadius:"24px 24px 0 0",maxHeight:"88vh",overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:"0 -8px 40px rgba(0,0,0,.2)"}} onClick={e=>e.stopPropagation()}>
+      <div style={{marginTop:"auto",background:WH,borderRadius:"24px 24px 0 0",maxHeight:"92vh",overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:"0 -8px 40px rgba(0,0,0,.2)"}} onClick={e=>e.stopPropagation()}>
         <div style={{padding:"16px 20px 12px",borderBottom:`1px solid ${GR2}`}}>
           <div style={{width:40,height:4,background:GR2,borderRadius:99,margin:"0 auto 14px"}}/>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div style={{flex:1}}>
               <h2 style={{fontSize:17,fontWeight:700,color:TX,margin:0}}>{recipe}</h2>
-              <p style={{fontSize:12,color:TX2,margin:0}}>{videos.length} videos · tap to watch in-app</p>
+              <p style={{fontSize:12,color:TX2,margin:0}}>{videos.length} videos · tap to watch</p>
             </div>
             <div style={{display:"flex",gap:6}}>
-              {[["views","👁"],["likes","👍"]].map(([key,icon])=>(
-                <button key={key} onClick={()=>setSortBy(key)} style={{padding:"6px 12px",borderRadius:99,border:`1.5px solid ${sortBy===key?BG:GR2}`,background:sortBy===key?BG:WH,color:sortBy===key?Y:TX2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>{icon} {key}</button>
+              {[["views","👁"],["likes","👍"],["default","🔀"]].map(([key,icon])=>(
+                <button key={key} onClick={()=>setSortBy(key)} style={{padding:"6px 10px",borderRadius:99,border:`1.5px solid ${sortBy===key?BG:GR2}`,background:sortBy===key?BG:WH,color:sortBy===key?Y:TX2,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>{icon}</button>
               ))}
             </div>
             <button onClick={onClose} style={{width:32,height:32,borderRadius:"50%",background:GR,border:"none",cursor:"pointer",fontSize:18,color:TX2,fontFamily:"inherit"}}>×</button>
@@ -107,13 +134,13 @@ function VideoSearchPanel({recipe,cuisine,onAssign,showAssign,onClose}) {
         </div>
         <div style={{overflowY:"auto",padding:"12px 16px",display:"flex",flexDirection:"column",gap:10}}>
           {loading?<Spinner/>:sorted.map((v,i)=>(
-            <div key={i} style={{display:"flex",gap:0,background:GR,borderRadius:12,overflow:"hidden",border:`1px solid ${GR2}`,cursor:"pointer",boxShadow:"0 1px 3px rgba(0,0,0,.05)",transition:"transform .1s"}}
+            <div key={v.video_id+i} style={{display:"flex",gap:0,background:GR,borderRadius:12,overflow:"hidden",border:`1px solid ${GR2}`,cursor:"pointer",boxShadow:"0 1px 3px rgba(0,0,0,.05)",transition:"transform .1s"}}
               onClick={()=>setSelected(v)}
               onMouseDown={e=>e.currentTarget.style.transform="scale(0.99)"}
               onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}
             >
               <div style={{position:"relative",flexShrink:0,width:128,height:72}}>
-                <img src={v.thumbnail} alt={v.title} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                <img src={v.thumbnail} alt={v.title} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
                 <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.25)",display:"flex",alignItems:"center",justifyContent:"center"}}>
                   <div style={{width:32,height:32,background:"rgba(255,0,0,.9)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>
                     <span style={{color:WH,fontSize:11,marginLeft:2}}>▶</span>
@@ -132,13 +159,19 @@ function VideoSearchPanel({recipe,cuisine,onAssign,showAssign,onClose}) {
                 </div>
               </div>
               {showAssign&&(
-                <button onClick={e=>{e.stopPropagation();onAssign(v);}} style={{background:BG,border:"none",color:Y,fontWeight:700,fontSize:11,padding:"0 14px",cursor:"pointer",fontFamily:"inherit",flexShrink:0,borderLeft:`1px solid rgba(255,255,255,.08)`,lineHeight:1.3}}>Send<br/>to cook</button>
+                <button onClick={e=>{e.stopPropagation();handleSend(v);}} disabled={sending} style={{background:sending?"#555":BG,border:"none",color:sending?"#aaa":Y,fontWeight:700,fontSize:11,padding:"0 14px",cursor:sending?"not-allowed":"pointer",fontFamily:"inherit",flexShrink:0,borderLeft:`1px solid rgba(255,255,255,.08)`,lineHeight:1.3,transition:"all .2s"}}>{sending?"Sent!":"Send\nto cook"}</button>
               )}
             </div>
           ))}
+          {/* Load more button */}
+          {!loading && videos.length > 0 && (
+            <button onClick={loadMore} disabled={loadingMore} style={{padding:"12px",borderRadius:10,border:`1px solid ${GR2}`,background:WH,color:TX2,fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"inherit",marginTop:4}}>
+              {loadingMore?"Loading...":"Load more videos"}
+            </button>
+          )}
         </div>
       </div>
-      {selected&&<VideoModal video={selected} onClose={()=>setSelected(null)} onAssign={v=>{onAssign(v);setSelected(null);}} showAssign={showAssign}/>}
+      {selected&&<VideoModal video={selected} onClose={()=>setSelected(null)} onAssign={v=>{if(!sending){setSending(true);onAssign(v).then(()=>setSending(false));setSelected(null);}} } showAssign={showAssign}/>}
     </div>
   );
 }
@@ -397,11 +430,24 @@ function SisterInterface({kitchenCode,onLeave}) {
 
   const handleConfirm=async(id)=>{await confirmKitchenOrder(kitchenCode,id);await loadOrders();};
   const handleAssign=async(recipe,video)=>{
-    const key=`${recipe.name}-${video?.video_id}`;
-    if(assignedRecipes.has(key)) return; // prevent duplicate sends
+    if(!recipe||!video) return;
+    const key=`${recipe.name}-${video.video_id}`;
+    if(assignedRecipes.has(key)){setToast(`Already sent "${recipe.name}" to cook!`);setTimeout(()=>setToast(""),2000);return;}
     setAssignedRecipes(prev=>new Set([...prev,key]));
-    await assignRecipe(kitchenCode,{recipe_name:recipe.name,youtube_url:video?.video_id?`https://www.youtube.com/watch?v=${video.video_id}`:recipe.youtube_video?.url,youtube_title:video?.title||recipe.youtube_video?.title,channel:video?.channel||recipe.youtube_video?.channel});
-    setToast(`"${recipe.name}" sent to your cook! 👩‍🍳`);setTimeout(()=>setToast(""),3000);setVideoPanel(null);
+    try{
+      await assignRecipe(kitchenCode,{
+        recipe_name:recipe.name,
+        youtube_url:`https://www.youtube.com/watch?v=${video.video_id}`,
+        youtube_title:video.title,
+        channel:video.channel,
+      });
+      setToast(`"${recipe.name}" sent to your cook! 👩‍🍳`);
+      setTimeout(()=>setToast(""),3000);
+      setVideoPanel(null);
+    }catch(e){
+      setAssignedRecipes(prev=>{const s=new Set(prev);s.delete(key);return s;});
+      console.error("assign failed",e);
+    }
   };
   const copyLink=()=>{navigator.clipboard.writeText(shareLink);setCopied(true);setTimeout(()=>setCopied(false),2000);};
   const cuisines=["","Indian","Bengali","Chinese","Italian","Continental"];
