@@ -92,9 +92,13 @@ export default function VoiceRecorder({ onFileReady, onTranscribe, loading }) {
   });
 
   const handleFileChange = e => {
-    const f = e.target.files[0];
-    if (f) { setUploadedFile(f); onFileReady(f); }
-  };
+  const f = e.target.files[0];
+  if (f) { 
+    setUploadedFile(f); 
+    onFileReady(f);
+    setMode("upload"); // ← add this line
+  }
+};
 
   const reset = () => {
     setMode(null); setRecorded(false); setAudioBlob(null);
