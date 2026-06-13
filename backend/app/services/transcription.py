@@ -21,7 +21,6 @@ MIME_MAP = {
     ".webm":"audio/webm", ".opus":"audio/ogg",
 }
 
-# Rich multilingual prompt for Whisper — covers all common Indian language grocery words
 WHISPER_PROMPT = (
     "This is a grocery shopping voice note. The speaker freely mixes Bengali, Hindi, "
     "English, Nepali, Bhojpuri, Odia, or Marathi in the same sentence. "
@@ -62,34 +61,26 @@ async def _transcribe_groq(file_bytes: bytes, filename: str) -> str:
     client = Groq(api_key=api_key)
     suffix = Path(filename).suffix.lower() or ".mp3"
 
-    # Try ogg/opus conversion first
-    try:
-        import io
-        from pydub import AudioSegment
-        if suffix in (".ogg", ".opus", ".webm"):
-            audio = AudioSegment.from_file(io.BytesIO(file_bytes), format=suffix.lstrip("."), codec="opus")
-        else:
-            audio = AudioSegment.from_file(io.BytesIO(file_bytes))
-        mp3_buf = io.BytesIO()
-        audio.export(mp3_buf, format="mp3")
-        file_bytes = mp3_buf.getvalue()
-        suffix = ".mp3"
-    except Exception as e:
-        print(f"Audio conversion skipped: {e}")
+    # Map to formats Groq Whisper supports directly — no pydub needed
+    format_map = {
+        ".webm": ".webm", ".ogg": ".ogg", ".m4a": ".m4a",
+        ".aac": ".m4a", ".mp3": ".mp3", ".wav": ".wav",
+        ".flac": ".flac", ".opus": ".ogg", ".mp4": ".mp4",
+    }
+    send_suffix = format_map.get(suffix, ".mp3")
 
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=send_suffix, delete=False) as tmp:
         tmp.write(file_bytes)
         tmp_path = tmp.name
 
     try:
         with open(tmp_path, "rb") as f:
             response = client.audio.transcriptions.create(
-                model="whisper-large-v3",  # Use full model for better multilingual accuracy
-                file=(filename, f),
-                response_format="verbose_json",  # Get language detection too
+                model="whisper-large-v3",
+                file=(f"audio{send_suffix}", f),
+                response_format="verbose_json",
                 prompt=WHISPER_PROMPT,
             )
-        # verbose_json returns object with .text and .language
         transcript = response.text if hasattr(response, 'text') else str(response)
         detected = getattr(response, 'language', 'unknown')
         print(f"   Detected language: {detected}")
@@ -128,7 +119,8 @@ async def _transcribe_openai(file_bytes: bytes, filename: str) -> str:
     client = AsyncOpenAI(api_key=api_key)
     suffix = Path(filename).suffix or ".mp3"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        tmp.write(file_bytes); tmp_path = tmp.name
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
     try:
         with open(tmp_path, "rb") as f:
             response = await client.audio.transcriptions.create(
