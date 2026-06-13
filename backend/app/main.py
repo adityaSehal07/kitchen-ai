@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from app.routers import transcribe, pricing, inventory, recipes, whatsapp, kitchen
+from app.routers import transcribe, pricing, inventory, recipes, whatsapp, kitchen, youtube
 from app.database import init_db
 
 load_dotenv()
@@ -22,6 +22,7 @@ app.include_router(inventory.router)
 app.include_router(recipes.router)
 app.include_router(whatsapp.router)
 app.include_router(kitchen.router)
+app.include_router(youtube.router)
 
 @app.get("/", tags=["Root"])
 async def root():
