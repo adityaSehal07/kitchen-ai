@@ -106,8 +106,14 @@ async def get_recipe_suggestions(
         score, matching, missing = _match_score(inventory_names, recipe["ingredients"])
         scored.append((score, recipe, matching, missing))
 
-    scored.sort(key=lambda x: x[0], reverse=True)
-    top = scored[:max_recipes]
+    # Sort by match score desc, then by number of matching ingredients desc
+    scored.sort(key=lambda x: (x[0], len(x[2])), reverse=True)
+    # Only show recipes where at least 1 ingredient matches from inventory
+    if inventory_names:
+        scored_with_match = [s for s in scored if s[0] > 0]
+        top = (scored_with_match if scored_with_match else scored)[:max_recipes]
+    else:
+        top = scored[:max_recipes]
 
     suggestions = []
     for score, recipe, matching, missing in top:

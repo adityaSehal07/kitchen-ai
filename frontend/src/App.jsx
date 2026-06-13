@@ -81,7 +81,7 @@ const Tag = ({children, color=S.orange}) => (
 );
 
 /* ── VIDEO MODAL ──────────────────────────────────────────── */
-function VideoModal({video, onClose, onSend, sending}) {
+function VideoModal({video, onClose, onSend, sent}) {
   if(!video) return null;
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:3000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:16}} onClick={onClose}>
@@ -102,12 +102,13 @@ function VideoModal({video, onClose, onSend, sending}) {
               <span key={i} style={{background:"rgba(255,255,255,.08)",color:"rgba(255,255,255,.65)",borderRadius:8,padding:"5px 12px",fontSize:12}}>{icon} {val}</span>
             ))}
             {onSend && (
-              <button onClick={()=>{if(!sending)onSend(video);}} disabled={sending} style={{
-                marginLeft:"auto",background:sending?"#555":S.orange,border:"none",
+              <button onClick={e=>{e.stopPropagation();onSend(video);}} disabled={!!sent} style={{
+                marginLeft:"auto",background:sent?S.green:S.orange,border:"none",
                 borderRadius:10,padding:"10px 20px",fontWeight:700,fontSize:13,
-                cursor:sending?"not-allowed":"pointer",color:"#fff",fontFamily:"inherit",
-                boxShadow:sending?"none":`0 4px 0 ${S.orangeDark}`,
-              }}>{sending?"✓ Sent!":"👩‍🍳 Send to cook"}</button>
+                cursor:sent?"not-allowed":"pointer",color:"#fff",fontFamily:"inherit",
+                boxShadow:sent?"none":`0 4px 0 ${S.orangeDark}`,
+                transition:"all .2s",
+              }}>{sent?"✓ Sent to cook!":"👩‍🍳 Send to cook"}</button>
             )}
             <button onClick={onClose} style={{background:"rgba(255,255,255,.08)",border:"none",borderRadius:10,padding:"10px 14px",color:"rgba(255,255,255,.5)",cursor:"pointer",fontFamily:"inherit",fontSize:13}}>Close</button>
           </div>
@@ -123,11 +124,12 @@ function VideoSearchPanel({recipe, cuisine, onAssign, showAssign, onClose}) {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("views");
   const [selected, setSelected] = useState(null);
-  const [sending, setSending] = useState(false);
-  const sentRef = useRef(false); // prevent any double send
+  const [sentVideoId, setSentVideoId] = useState(null); // track which ONE video was sent
+  const isSendingRef = useRef(false); // hard lock
 
   useEffect(() => {
-    sentRef.current = false;
+    isSendingRef.current = false;
+    setSentVideoId(null);
     setLoading(true);
     searchRecipeVideos(recipe, cuisine, 12)
       .then(d => setVideos(d.videos || []))
@@ -135,15 +137,18 @@ function VideoSearchPanel({recipe, cuisine, onAssign, showAssign, onClose}) {
       .finally(() => setLoading(false));
   }, [recipe, cuisine]);
 
+  // This is the ONLY send function — called for exactly one video
   const handleSend = async (video) => {
-    if(sentRef.current || sending) return; // hard block
-    sentRef.current = true;
-    setSending(true);
+    if(isSendingRef.current) return; // hard block concurrent calls
+    if(sentVideoId) return; // already sent one
+    isSendingRef.current = true;
+    setSentVideoId(video.video_id);
     try {
-      await onAssign(video);
+      await onAssign(video); // calls handleAssign in SisterInterface
+    } catch(e) {
+      setSentVideoId(null); // reset on error
     } finally {
-      // Keep sent state for 2s then allow again
-      setTimeout(() => { setSending(false); }, 2000);
+      isSendingRef.current = false;
     }
   };
 
@@ -205,21 +210,23 @@ function VideoSearchPanel({recipe, cuisine, onAssign, showAssign, onClose}) {
                   </div>
                 </div>
               </div>
-              {/* Send button — isolated click */}
+              {/* Send button — only ONE video can be sent */}
               {showAssign && (
                 <button
-                  onClick={e => { e.stopPropagation(); handleSend(v); }}
-                  disabled={sending}
+                  onClick={e => { e.stopPropagation(); e.preventDefault(); handleSend(v); }}
+                  disabled={!!sentVideoId}
                   style={{
-                    background: sending ? "#888" : S.dark,
-                    border:"none", color: sending ? "#ccc" : S.orange,
+                    background: sentVideoId===v.video_id ? S.green : sentVideoId ? "#ccc" : S.dark,
+                    border:"none", color:"#fff",
                     fontWeight:700, fontSize:11, padding:"0 14px",
-                    cursor: sending ? "not-allowed" : "pointer",
+                    cursor: sentVideoId ? "not-allowed" : "pointer",
                     fontFamily:"inherit", flexShrink:0,
                     borderLeft:`1px solid ${S.border}`,
-                    lineHeight:1.3, minWidth:60, textAlign:"center",
+                    lineHeight:1.4, minWidth:64, textAlign:"center",
+                    transition:"background .2s",
                   }}
-                >{sending ? "✓" : "Send\nto cook"}</button>
+                >{sentVideoId===v.video_id ? "✓ Sent!" : "Send
+to cook"}</button>
               )}
             </div>
           ))}
@@ -231,7 +238,7 @@ function VideoSearchPanel({recipe, cuisine, onAssign, showAssign, onClose}) {
           video={selected}
           onClose={() => setSelected(null)}
           onSend={showAssign ? handleSend : null}
-          sending={sending}
+          sent={sentVideoId === selected?.video_id}
         />
       )}
     </div>
@@ -374,7 +381,7 @@ function Nav({tabs, activeTab, setTab, kitchenCode, onLeave, role}) {
           fontFamily:"inherit",transition:"all .15s",
         }}>{label}</button>
       ))}
-      <button onClick={onLeave} style={{background:"none",border:"none",color:"rgba(255,255,255,.2)",cursor:"pointer",fontSize:12,fontFamily:"inherit",marginLeft:6}}>Exit</button>
+      <button onClick={onLeave} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",color:"rgba(255,255,255,.7)",cursor:"pointer",fontSize:12,fontFamily:"inherit",marginLeft:8,padding:"6px 12px",borderRadius:8,fontWeight:600}}>Exit</button>
     </nav>
   );
 }
@@ -800,7 +807,8 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-        body { font-family: 'DM Sans', system-ui, sans-serif; background: ${S.bg}; -webkit-font-smoothing: antialiased; }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: ${S.bg}; -webkit-font-smoothing: antialiased; overflow-x: hidden; max-width: 100vw; }
+        html { overflow-x: hidden; }
         @keyframes spin { to { transform: rotate(360deg); } }
         input, textarea { user-select: text !important; -webkit-user-select: text !important; }
         a { text-decoration: none; }
