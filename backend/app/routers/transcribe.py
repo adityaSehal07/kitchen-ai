@@ -71,6 +71,9 @@ async def transcribe_voice_note(
     except EnvironmentError as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     except Exception as e:
+        import traceback
+        print(f"TRANSCRIPTION ERROR: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Transcription failed: {str(e)}",
@@ -84,9 +87,12 @@ async def transcribe_voice_note(
     except EnvironmentError as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     except Exception as e:
+        import traceback
+        print(f"TRANSCRIPTION ERROR: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Extraction failed: {str(e)}",
+            detail=f"Transcription failed: {str(e)}",
         )
 
     return TranscriptionResult(
