@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const api = axios.create({ baseURL: "https://kitchen-ai-production-2814.up.railway.app/api/v1" });
+const api = axios.create({ baseURL: "/api/v1" });
 
 export const transcribeAudio = async (file) => {
   const form = new FormData();
@@ -45,5 +45,41 @@ export const getPendingOrder = async () => {
 
 export const confirmPurchase = async (orderId) => {
   const { data } = await api.post(`/webhook/confirm-purchase/${orderId}`);
+  return data;
+};
+
+// Kitchen API
+export const createKitchen = async (name = "My Kitchen") => {
+  const { data } = await api.post("/kitchen/create", { name });
+  return data;
+};
+
+export const verifyKitchen = async (code) => {
+  const { data } = await api.get(`/kitchen/${code}/verify`);
+  return data;
+};
+
+export const saveKitchenOrder = async (code, groceryList) => {
+  const { data } = await api.post(`/kitchen/${code}/order`, { grocery_list: groceryList });
+  return data;
+};
+
+export const getKitchenOrders = async (code) => {
+  const { data } = await api.get(`/kitchen/${code}/orders`);
+  return data;
+};
+
+export const confirmKitchenOrder = async (code, orderId) => {
+  const { data } = await api.post(`/kitchen/${code}/confirm-order/${orderId}`);
+  return data;
+};
+
+export const assignRecipe = async (code, recipe) => {
+  const { data } = await api.post(`/kitchen/${code}/assign-recipe`, recipe);
+  return data;
+};
+
+export const getAssignedRecipe = async (code) => {
+  const { data } = await api.get(`/kitchen/${code}/assigned-recipe`);
   return data;
 };
