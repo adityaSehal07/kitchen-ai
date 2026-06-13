@@ -22,24 +22,13 @@ MIME_MAP = {
 }
 
 WHISPER_PROMPT = (
-    "This is a grocery shopping voice note. The speaker freely mixes Bengali, Hindi, "
-    "English, Nepali, Bhojpuri, Odia, or Marathi in the same sentence. "
-    "Transcribe EXACTLY as spoken — preserve original words, do not translate. "
-    "Common words used: "
-    "aloo/alu=potato, peyaj/pyaz/kanda=onion, dudh=milk, chini/cheeni/sakkar=sugar, "
-    "dim/anda/egg=eggs, tel/oil=oil, begun/baingan/brinjal=eggplant, "
-    "roshun/lahsun/garlic, ada/adrak/ginger, dhone pata/dhaniya=coriander, "
-    "tomato, maach/machhli/fish, murgi/murga/chicken, mangsho/gosht/meat, "
-    "dal/daal=lentils, chawal/chal/bhat=rice, atta/maida=flour, "
-    "noon/namak/salt, lonka/mirch=chilli, sorshe tel=mustard oil, "
-    "nariyal tel=coconut oil, ghee, maakhan/butter, paneer, dahi/curd, "
-    "sabzi=vegetables, mewa/dry fruits, biscuit, bread, ডাল, আলু, পেঁয়াজ. "
-    "Quantity words: ek/ekta/one, do/dui/dono/two, teen/tin/three, "
-    "char/chaar/four, paanch/five, "
-    "kilo/kg, gram, litre/liter, dozen/darjan, packet/pata, bottle/botal, "
-    "pao/quarter=250g, aadha/aadda/ardha=half, "
-    "ektu/thoda/thodi=a little, beshi/jyada=more, "
-    "choto/chhota=small, boro/bada=big."
+    "Grocery voice note in Bengali/Hindi/English mix. Transcribe exactly as spoken. "
+    "Words: aloo=potato, peyaj=onion, dudh=milk, chini=sugar, dim/anda=eggs, "
+    "tel=oil, begun=brinjal, roshun=garlic, ada=ginger, dhone pata=coriander, "
+    "maach=fish, murgi=chicken, dal=lentils, chawal=rice, atta=flour, "
+    "noon=salt, lonka=chilli, sorshe tel=mustard oil, ghee, paneer, dahi=curd. "
+    "Quantities: ek=1, do=2, kilo, gram, litre, dozen, packet, bottle, "
+    "pao=250g, aadha=half, ektu=little."
 )
 
 
