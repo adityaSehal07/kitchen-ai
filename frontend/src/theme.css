@@ -1,0 +1,110 @@
+/* ── KITCHEN AI — PREMIUM DESIGN SYSTEM ─────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* DARK MODE (default) */
+  --bg-primary: #121417;
+  --bg-card: #1E2126;
+  --bg-elevated: #252A31;
+  --bg-input: #1A1E24;
+
+  --text-primary: #EAEAEA;
+  --text-secondary: #8F95A0;
+  --text-tertiary: #5A6070;
+
+  --gold: #C5A880;
+  --gold-dark: #AA7C11;
+  --gold-gradient: linear-gradient(45deg, #D4AF37, #AA7C11);
+  --gold-soft: linear-gradient(45deg, #C5A880, #DFD3C3);
+  --gold-glow: rgba(197, 168, 128, 0.15);
+
+  --border: rgba(197, 168, 128, 0.12);
+  --border-strong: rgba(197, 168, 128, 0.25);
+
+  --shadow-card: none;
+  --shadow-btn: 0 4px 20px rgba(197, 168, 128, 0.2);
+
+  --green: #3DAA6B;
+  --green-bg: rgba(61, 170, 107, 0.1);
+  --green-border: rgba(61, 170, 107, 0.25);
+
+  --red: #D64545;
+  --red-bg: rgba(214, 69, 69, 0.1);
+  --red-border: rgba(214, 69, 69, 0.25);
+
+  --orange: #E07A2B;
+  --orange-bg: rgba(224, 122, 43, 0.1);
+
+  --platform-blinkit: #0c831f;
+  --platform-zepto: #8025f5;
+  --platform-instamart: #FC8019;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.light-mode {
+  --bg-primary: #F7F5F0;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F0EDE6;
+  --bg-input: #F5F3EE;
+
+  --text-primary: #1C1E21;
+  --text-secondary: #6E737D;
+  --text-tertiary: #9DA3AE;
+
+  --border: rgba(197, 168, 128, 0.2);
+  --border-strong: rgba(197, 168, 128, 0.4);
+
+  --shadow-card: 0 10px 30px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-btn: 0 4px 20px rgba(197, 168, 128, 0.3);
+
+  --green-bg: rgba(61, 170, 107, 0.08);
+  --orange-bg: rgba(224, 122, 43, 0.08);
+  --red-bg: rgba(214, 69, 69, 0.08);
+}
+
+/* BASE RESET */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html { overflow-x: hidden !important; }
+
+body {
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden !important;
+  width: 100vw !important;
+  transition: var(--transition);
+}
+
+#root { overflow-x: hidden; width: 100%; }
+
+input, textarea {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+}
+
+a { text-decoration: none; color: inherit; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes blob1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-20px) scale(1.05)} 66%{transform:translate(-20px,15px) scale(0.97)} }
+@keyframes blob2 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-25px,20px) scale(1.03)} 66%{transform:translate(20px,-10px) scale(0.98)} }
+@keyframes blob3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-15px,-25px) scale(1.06)} }
+@keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
