@@ -226,8 +226,7 @@ function VideoSearchPanel({recipe, cuisine, onAssign, showAssign, onClose}) {
                     lineHeight:1.4, minWidth:64, textAlign:"center",
                     transition:"background .2s",
                   }}
-                >{sentVideoId===v.video_id ? "✓ Sent!" : "Send
-to cook"}</button>
+                >{sentVideoId===v.video_id ? "✓ Sent!" : "Send to cook"}</button>
               )}
             </div>
           ))}
