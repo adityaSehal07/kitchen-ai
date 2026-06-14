@@ -239,3 +239,21 @@ async def get_assigned_recipe(code: str):
             "assigned_at": row["assigned_at"],
         }
     }
+
+
+@router.delete("/{code}/destroy")
+async def destroy_kitchen(code: str):
+    """Owner exits → destroy kitchen, all orders, assigned recipes."""
+    init_kitchen_tables()
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM kitchen_orders WHERE kitchen_code = ?", (code.upper(),))
+        cursor.execute("DELETE FROM assigned_recipes WHERE kitchen_code = ?", (code.upper(),))
+        cursor.execute("DELETE FROM kitchens WHERE code = ?", (code.upper(),))
+        conn.commit()
+        return {"success": True, "message": f"Kitchen {code} destroyed"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+    finally:
+        conn.close()

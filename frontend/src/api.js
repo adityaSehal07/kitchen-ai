@@ -88,3 +88,8 @@ export const searchRecipeVideos = async (recipe, cuisine = "Indian", maxResults 
   });
   return data;
 };
+
+export const destroyKitchen = async (code) => {
+  const { data } = await api.delete(`/kitchen/${code}/destroy`);
+  return data;
+};

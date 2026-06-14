@@ -3,6 +3,8 @@ import "./theme.css";
 import InstallBanner from "./InstallBanner";
 import VoiceRecorder from "./VoiceRecorder";
 import RecipeFlow from "./RecipeFlow";
+import MaidPushToTalk from "./MaidPushToTalk";
+import { destroyKitchen } from "./api";
 import PriceCompare from "./PriceCompare";
 import {
   transcribeAudio, getInventory, addInventoryBulk, removeInventoryItem,
@@ -548,7 +550,17 @@ export default function App() {
   };
 
   const handleMaid=code=>{setKitchenCode(code);setRole("maid");localStorage.setItem("kitchenCode",code);localStorage.setItem("kitchenRole","maid");};
-  const handleLeave=()=>{localStorage.removeItem("kitchenCode");localStorage.removeItem("kitchenRole");setRole(null);setKitchenCode(null);window.history.replaceState({},"","/");};
+  const handleLeave=async()=>{
+    const savedRole=localStorage.getItem("kitchenRole");
+    const savedCode=localStorage.getItem("kitchenCode");
+    if(savedRole==="sister"&&savedCode){
+      try{await destroyKitchen(savedCode);}catch(e){console.error(e);}
+    }
+    localStorage.removeItem("kitchenCode");
+    localStorage.removeItem("kitchenRole");
+    setRole(null);setKitchenCode(null);
+    window.history.replaceState({},"","/");
+  };
 
   return (
     <>
@@ -560,7 +572,7 @@ export default function App() {
         </div>
       )}
       {!role&&<LandingPage onSister={handleSister} onMaid={handleMaid} dark={dark} onToggleTheme={toggleTheme}/>}
-      {role==="maid"&&kitchenCode&&<MaidInterface kitchenCode={kitchenCode} onLeave={handleLeave} dark={dark} onToggleTheme={toggleTheme}/>}
+      {role==="maid"&&kitchenCode&&<MaidPushToTalk kitchenCode={kitchenCode} onExit={handleLeave}/>}
       {role==="sister"&&kitchenCode&&<SisterInterface kitchenCode={kitchenCode} onLeave={handleLeave} dark={dark} onToggleTheme={toggleTheme}/>}
       {sharedVideo&&<SharedVideoModal video={sharedVideo} kitchenCode={role==="sister"?kitchenCode:null} onClose={()=>setSharedVideo(null)}/>}
     </>
