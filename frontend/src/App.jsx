@@ -3,6 +3,7 @@ import "./theme.css";
 import InstallBanner from "./InstallBanner";
 import VoiceRecorder from "./VoiceRecorder";
 import RecipeFlow from "./RecipeFlow";
+import PriceCompare from "./PriceCompare";
 import {
   transcribeAudio, getInventory, addInventoryBulk, removeInventoryItem,
   createKitchen, verifyKitchen, saveKitchenOrder,
@@ -415,6 +416,7 @@ function SisterInterface({kitchenCode, onLeave, dark, onToggleTheme}) {
   const [orders, setOrders] = useState([]);
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState("");
+  const [priceCompareOrder, setPriceCompareOrder] = useState(null);
 
   const shareLink = `${window.location.origin}?code=${kitchenCode}`;
 
@@ -498,6 +500,12 @@ function SisterInterface({kitchenCode, onLeave, dark, onToggleTheme}) {
                   ))}
                   <GBtn green onClick={()=>handleConfirm(order.id)}>✓ Bought</GBtn>
                 </div>
+                <button onClick={()=>setPriceCompareOrder(order)} style={{
+                  width:"100%",marginTop:10,padding:"11px",borderRadius:"var(--radius-md)",
+                  background:"var(--bg-elevated)",border:"1px solid var(--border-strong)",
+                  color:"var(--gold)",fontWeight:600,fontSize:13,cursor:"pointer",
+                  fontFamily:"inherit",letterSpacing:"0.02em",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                }}>🔍 Compare prices across platforms</button>
               </Card>
             ))}
           </div>
@@ -507,6 +515,7 @@ function SisterInterface({kitchenCode, onLeave, dark, onToggleTheme}) {
         {tab==="recipes"&&<RecipeFlow kitchenCode={kitchenCode} role="sister"/>}
       </div>
       <InstallBanner/>
+      {priceCompareOrder && <PriceCompare groceryList={priceCompareOrder.grocery_list} onClose={()=>setPriceCompareOrder(null)}/>}
     </div>
   );
 }

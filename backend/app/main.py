@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from app.routers import transcribe, pricing, inventory, recipes, whatsapp, kitchen, youtube
+from app.routers import transcribe, pricing, inventory, recipes, whatsapp, kitchen, youtube, price_compare
 from app.database import init_db
 
 load_dotenv()
@@ -18,6 +18,7 @@ async def startup_event():
 
 app.include_router(transcribe.router)
 app.include_router(pricing.router)
+app.include_router(price_compare.router)
 app.include_router(inventory.router)
 app.include_router(recipes.router)
 app.include_router(whatsapp.router)
