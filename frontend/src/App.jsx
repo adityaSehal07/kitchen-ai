@@ -363,25 +363,34 @@ function LandingPage({onSister, onMaid}) {
 }
 
 /* ── NAV ──────────────────────────────────────────────────── */
-function Nav({tabs, activeTab, setTab, kitchenCode, onLeave, role}) {
+function Nav({tabs, activeTab, setTab, kitchenCode, onLeave}) {
   return (
-    <nav style={{background:S.dark,padding:"0 20px",display:"flex",alignItems:"center",position:"sticky",top:0,zIndex:500,boxShadow:"0 2px 8px rgba(0,0,0,.2)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginRight:"auto",padding:"13px 0"}}>
-        <div style={{width:32,height:32,background:`linear-gradient(135deg,${S.orange},${S.orangeDark})`,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 3px 0 ${S.orangeDark}`}}>⚡</div>
-        <span style={{color:"#fff",fontWeight:800,fontSize:16,letterSpacing:"-.01em"}}>KitchenAI</span>
-        {kitchenCode && <span style={{background:"rgba(255,255,255,.08)",color:"rgba(255,255,255,.5)",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:700,letterSpacing:"0.08em"}}>{kitchenCode}</span>}
+    <nav style={{background:S.dark,position:"sticky",top:0,zIndex:500,boxShadow:"0 2px 8px rgba(0,0,0,.2)"}}>
+      {/* Top row: logo + exit */}
+      <div style={{display:"flex",alignItems:"center",padding:"10px 16px 0",gap:10}}>
+        <div style={{width:28,height:28,background:`linear-gradient(135deg,${S.orange},${S.orangeDark})`,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>⚡</div>
+        <span style={{color:"#fff",fontWeight:800,fontSize:15,flex:1}}>KitchenAI</span>
+        {kitchenCode && <span style={{background:"rgba(255,255,255,.08)",color:"rgba(255,255,255,.5)",borderRadius:6,padding:"3px 8px",fontSize:11,fontWeight:700,letterSpacing:"0.06em",flexShrink:0}}>{kitchenCode}</span>}
+        <button onClick={onLeave} style={{
+          background:"rgba(239,68,68,.2)",border:"1.5px solid rgba(239,68,68,.5)",
+          color:"#fca5a5",cursor:"pointer",fontSize:12,fontFamily:"inherit",
+          padding:"6px 12px",borderRadius:8,fontWeight:700,flexShrink:0,
+          boxShadow:"0 2px 0 rgba(239,68,68,.3)",
+        }}>✕ Exit</button>
       </div>
-      {tabs.map(([key,label]) => (
-        <button key={key} onClick={() => setTab(key)} style={{
-          background:"none",border:"none",
-          color: activeTab===key ? S.orange : "rgba(255,255,255,.4)",
-          fontWeight: activeTab===key ? 700 : 500,
-          fontSize:13,cursor:"pointer",padding:"15px 12px",
-          borderBottom: activeTab===key ? `2px solid ${S.orange}` : "2px solid transparent",
-          fontFamily:"inherit",transition:"all .15s",
-        }}>{label}</button>
-      ))}
-      <button onClick={onLeave} style={{background:"rgba(239,68,68,.15)",border:"1px solid rgba(239,68,68,.4)",color:"#fca5a5",cursor:"pointer",fontSize:12,fontFamily:"inherit",marginLeft:8,padding:"7px 14px",borderRadius:8,fontWeight:700,letterSpacing:"0.02em"}}>✕ Exit</button>
+      {/* Bottom row: tabs */}
+      <div style={{display:"flex",padding:"0 8px"}}>
+        {tabs.map(([key,label]) => (
+          <button key={key} onClick={() => setTab(key)} style={{
+            flex:1,background:"none",border:"none",
+            color: activeTab===key ? S.orange : "rgba(255,255,255,.4)",
+            fontWeight: activeTab===key ? 700 : 500,
+            fontSize:12,cursor:"pointer",padding:"10px 4px",
+            borderBottom: activeTab===key ? `2px solid ${S.orange}` : "2px solid transparent",
+            fontFamily:"inherit",transition:"all .15s",whiteSpace:"nowrap",
+          }}>{label}</button>
+        ))}
+      </div>
     </nav>
   );
 }
@@ -627,7 +636,6 @@ function SisterInterface({kitchenCode, onLeave}) {
           <RecipeFlow kitchenCode={kitchenCode} role="sister"/>
         )}
 
-      </div>
 
       {videoPanel && (
         <VideoSearchPanel
@@ -696,8 +704,9 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-        html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100vw !important; }
-        body { font-family: 'DM Sans', system-ui, sans-serif; background: #F5F5F5; -webkit-font-smoothing: antialiased; }
+        html { overflow-x: hidden !important; }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: #F5F5F5; -webkit-font-smoothing: antialiased; overflow-x: hidden !important; width: 100vw !important; }
+        #root { overflow-x: hidden; width: 100%; }
         @keyframes spin { to { transform: rotate(360deg); } }
         input, textarea { user-select: text !important; -webkit-user-select: text !important; }
         a { text-decoration: none; }
