@@ -517,6 +517,7 @@ export default function App() {
         @keyframes blob2{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(-25px,20px) scale(1.03);}66%{transform:translate(20px,-10px) scale(0.98);}}
         @keyframes blob3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-15px,-25px) scale(1.06);}}
         @keyframes logoFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+        @keyframes slideUp{from{transform:translateY(100%);opacity:0;}to{transform:translateY(0);opacity:1;}}
       `}</style>
 
       {creating&&(

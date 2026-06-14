@@ -352,6 +352,76 @@ function MaidRecipeView({ kitchenCode }) {
   );
 }
 
+/* ── PASTE VIDEO MODAL (for laptop users) ────────────────── */
+function PasteVideoModal({ kitchenCode, onClose }) {
+  const [url, setUrl] = useState("");
+  const [recipeName, setRecipeName] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  const extractVideoId = (input) => {
+    const match = input.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] : null;
+  };
+
+  const send = async () => {
+    if(!url.trim()) return setError("Please paste a YouTube URL");
+    const videoId = extractVideoId(url);
+    if(!videoId) return setError("Couldn't find a YouTube video in that link. Try copying the URL from YouTube.");
+    if(!recipeName.trim()) return setError("Please enter the recipe name");
+
+    setSending(true); setError("");
+    try {
+      await assignRecipe(kitchenCode, {
+        recipe_name: recipeName,
+        youtube_url: `https://www.youtube.com/watch?v=${videoId}`,
+        youtube_title: recipeName + " Recipe",
+        channel: "YouTube",
+      });
+      setSent(true);
+      setTimeout(() => { setSent(false); onClose(); }, 2000);
+    } catch(e) {
+      setError("Failed to send. Try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:4000,display:"flex",alignItems:"center",justifyContent:"center",padding:20,backdropFilter:"blur(4px)"}}>
+      <div style={{background:"#fff",borderRadius:20,padding:"24px",width:"100%",maxWidth:420,boxShadow:"0 8px 0 #ccc, 0 16px 40px rgba(0,0,0,.3)"}}>
+        <h2 style={{fontSize:17,fontWeight:700,color:S.text,margin:"0 0 4px"}}>Send recipe to cook</h2>
+        <p style={{fontSize:13,color:S.text2,margin:"0 0 20px"}}>Paste a YouTube recipe link to send to your maid</p>
+
+        <p style={{fontSize:13,fontWeight:600,color:S.text,margin:"0 0 6px"}}>Recipe name</p>
+        <input value={recipeName} onChange={e=>setRecipeName(e.target.value)}
+          placeholder="e.g. Aloo Dum, Dal Tadka..."
+          style={{width:"100%",padding:"12px 14px",borderRadius:10,border:`1.5px solid ${recipeName?S.orange:S.border}`,fontSize:14,outline:"none",fontFamily:"inherit",marginBottom:14,boxSizing:"border-box"}}/>
+
+        <p style={{fontSize:13,fontWeight:600,color:S.text,margin:"0 0 6px"}}>YouTube link</p>
+        <input value={url} onChange={e=>setUrl(e.target.value)}
+          placeholder="https://www.youtube.com/watch?v=..."
+          style={{width:"100%",padding:"12px 14px",borderRadius:10,border:`1.5px solid ${url?S.orange:S.border}`,fontSize:13,outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}/>
+
+        <p style={{fontSize:11,color:S.text3,margin:"0 0 16px"}}>💡 On YouTube, click Share → Copy Link, then paste here</p>
+
+        {error && <p style={{fontSize:13,color:S.red,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"10px 12px",margin:"0 0 14px"}}>{error}</p>}
+
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onClose} style={{flex:1,padding:"12px",borderRadius:10,border:`1px solid ${S.border}`,background:"#fff",color:S.text2,fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+          <button onClick={send} disabled={sending||sent} style={{
+            flex:2,padding:"12px",borderRadius:10,border:"none",
+            background:sent?S.green:sending?"#ccc":S.orange,
+            color:"#fff",fontWeight:700,fontSize:14,cursor:sending?"not-allowed":"pointer",
+            fontFamily:"inherit",boxShadow:sent?`0 3px 0 #1a7a3d`:`0 3px 0 ${S.orangeDark}`,
+          }}>{sent?"✓ Sent to cook!":sending?"Sending...":"Send to cook 👩‍🍳"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── MAIN RECIPE FLOW ─────────────────────────────────────── */
 export default function RecipeFlow({ kitchenCode, role }) {
   const [recipes, setRecipes] = useState([]);
@@ -359,6 +429,7 @@ export default function RecipeFlow({ kitchenCode, role }) {
   const [cuisine, setCuisine] = useState("");
   const [vegFilter, setVegFilter] = useState(null);
   const [activePlayer, setActivePlayer] = useState(null);
+  const [pasteModal, setPasteModal] = useState(false);
 
   const cuisines = ["","Indian","Bengali","Chinese","Italian","Continental"];
 
@@ -413,6 +484,23 @@ export default function RecipeFlow({ kitchenCode, role }) {
           ))}
         </div>
 
+        {/* Paste YouTube link button for laptop users */}
+        <button onClick={()=>setPasteModal(true)} style={{
+          display:"flex",alignItems:"center",gap:10,
+          background:"linear-gradient(135deg,#ff0000,#cc0000)",
+          border:"none",borderRadius:12,padding:"12px 18px",
+          color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",
+          fontFamily:"inherit",width:"100%",
+          boxShadow:"0 4px 0 #880000, 0 6px 16px rgba(255,0,0,.2)",
+        }}>
+          <span style={{fontSize:18}}>📋</span>
+          <div style={{textAlign:"left"}}>
+            <p style={{margin:0,fontWeight:700}}>Paste YouTube link → Send to cook</p>
+            <p style={{margin:0,fontSize:11,opacity:.75,fontWeight:400}}>Copy a recipe URL from YouTube and send directly to your maid</p>
+          </div>
+          <span style={{marginLeft:"auto",fontSize:16}}>→</span>
+        </button>
+
         {/* Recipes */}
         {loading ? <Spinner/> : recipes.length===0 ? (
           <div style={{textAlign:"center",padding:"40px 20px",background:S.card,borderRadius:16,border:`1px solid ${S.border}`}}>
@@ -432,6 +520,9 @@ export default function RecipeFlow({ kitchenCode, role }) {
           kitchenCode={kitchenCode}
           onClose={() => setActivePlayer(null)}
         />
+      )}
+      {pasteModal && kitchenCode && (
+        <PasteVideoModal kitchenCode={kitchenCode} onClose={()=>setPasteModal(false)}/>
       )}
     </>
   );
