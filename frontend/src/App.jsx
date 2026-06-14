@@ -7,6 +7,7 @@ import {
   getKitchenOrders, confirmKitchenOrder, assignRecipe, getAssignedRecipe,
   searchRecipeVideos,
 } from "./api";
+import RecipeFlow from "./RecipeFlow";
 
 // Swiggy-inspired color palette
 const S = {
@@ -381,7 +382,7 @@ function Nav({tabs, activeTab, setTab, kitchenCode, onLeave, role}) {
           fontFamily:"inherit",transition:"all .15s",
         }}>{label}</button>
       ))}
-      <button onClick={onLeave} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",color:"rgba(255,255,255,.7)",cursor:"pointer",fontSize:12,fontFamily:"inherit",marginLeft:8,padding:"6px 12px",borderRadius:8,fontWeight:600}}>Exit</button>
+      <button onClick={onLeave} style={{background:"rgba(239,68,68,.15)",border:"1px solid rgba(239,68,68,.4)",color:"#fca5a5",cursor:"pointer",fontSize:12,fontFamily:"inherit",marginLeft:8,padding:"7px 14px",borderRadius:8,fontWeight:700,letterSpacing:"0.02em"}}>✕ Exit</button>
     </nav>
   );
 }
@@ -471,36 +472,9 @@ function MaidInterface({kitchenCode, onLeave}) {
 
         {tab==="pantry" && <PantryView readOnly={true}/>}
 
-        {tab==="recipe" && (assignedRecipe ? (
-          <Card>
-            <div style={{background:`linear-gradient(135deg,${S.dark},${S.darker})`,borderRadius:14,padding:"18px 20px",marginBottom:18}}>
-              <p style={{fontSize:11,color:S.orange,fontWeight:700,margin:"0 0 4px",textTransform:"uppercase",letterSpacing:"0.08em"}}>Cook this today</p>
-              <h2 style={{fontSize:22,fontWeight:800,color:"#fff",margin:0}}>{assignedRecipe.name}</h2>
-            </div>
-            {assignedRecipe.youtube_url && (
-              <button onClick={() => setVideoPanel({recipe:assignedRecipe.name, cuisine:"Indian"})} style={{
-                width:"100%",background:S.dark,border:"none",borderRadius:14,padding:"16px 18px",
-                display:"flex",alignItems:"center",gap:14,cursor:"pointer",fontFamily:"inherit",
-                boxShadow:`0 4px 0 #0d0f18, 0 6px 20px rgba(0,0,0,.2)`,
-              }}>
-                <div style={{width:52,height:52,background:"linear-gradient(135deg,#ff0000,#cc0000)",borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 4px 0 #880000"}}>
-                  <span style={{color:"#fff",fontSize:22}}>▶</span>
-                </div>
-                <div style={{textAlign:"left"}}>
-                  <p style={{fontSize:14,fontWeight:700,color:"#fff",margin:"0 0 3px"}}>{assignedRecipe.youtube_title || "Watch recipe video"}</p>
-                  <p style={{fontSize:12,color:"rgba(255,255,255,.45)",margin:0}}>{assignedRecipe.channel} · Tap to watch</p>
-                </div>
-                <span style={{marginLeft:"auto",color:S.orange,fontSize:18}}>→</span>
-              </button>
-            )}
-          </Card>
-        ) : (
-          <Card style={{textAlign:"center",padding:"48px 20px"}}>
-            <div style={{fontSize:44,marginBottom:14}}>🍳</div>
-            <h2 style={{fontSize:17,fontWeight:700,color:S.text,margin:"0 0 6px"}}>No recipe assigned yet</h2>
-            <p style={{fontSize:13,color:S.text2,margin:0}}>Your employer will assign a recipe soon</p>
-          </Card>
-        ))}
+        {tab==="recipe" && (
+          <RecipeFlow kitchenCode={kitchenCode} role="maid"/>
+        )}
       </div>
 
       {videoPanel && <VideoSearchPanel recipe={videoPanel.recipe} cuisine="Indian" showAssign={false} onClose={() => setVideoPanel(null)} onAssign={() => {}}/>}
@@ -651,94 +625,9 @@ function SisterInterface({kitchenCode, onLeave}) {
 
         {/* RECIPES TAB */}
         {tab==="recipes" && (
-          <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            {/* Veg toggle */}
-            <div style={{display:"flex",gap:8}}>
-              {[[null,"🍽 All"],[true,"🟢 Veg only"],[false,"🍗 Non-veg"]].map(([val,label]) => (
-                <button key={String(val)} onClick={() => setVegFilter(val)} style={{
-                  flex:1,padding:"10px",borderRadius:12,
-                  border:`2px solid ${vegFilter===val ? (val===true?S.green:val===false?S.red:S.dark) : S.border}`,
-                  background: vegFilter===val ? (val===true?"#f0fdf4":val===false?"#fef2f2":S.dark) : "#fff",
-                  color: vegFilter===val ? (val===true?S.green:val===false?S.red:S.orange) : S.text2,
-                  fontWeight: vegFilter===val ? 700 : 500,
-                  fontSize:13,cursor:"pointer",fontFamily:"inherit",
-                  boxShadow: vegFilter===val ? `0 3px 0 ${val===true?"#16a34a":val===false?"#b91c1c":S.darker}` : "0 2px 0 #e0e0e0",
-                }}>{label}</button>
-              ))}
-            </div>
-            {/* Cuisine filter */}
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              {cuisines.map(c => (
-                <button key={c} onClick={() => setCuisine(c)} style={{
-                  padding:"8px 18px",borderRadius:99,
-                  border:`2px solid ${cuisine===c ? S.dark : S.border}`,
-                  background: cuisine===c ? S.dark : "#fff",
-                  color: cuisine===c ? S.orange : S.text2,
-                  fontWeight: cuisine===c ? 700 : 500,
-                  fontSize:13,cursor:"pointer",fontFamily:"inherit",
-                  boxShadow: cuisine===c ? `0 3px 0 ${S.darker}` : "0 2px 0 #e0e0e0",
-                }}>{c||"All cuisines"}</button>
-              ))}
-            </div>
-
-            {loading ? <Spinner/> : (
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:14}}>
-                {recipes.map((recipe,i) => (
-                  <div key={i} style={{background:"#fff",borderRadius:18,overflow:"hidden",border:`1px solid ${S.border}`,boxShadow:"0 4px 0 #e0e0e0, 0 6px 16px rgba(0,0,0,.06)",transition:"transform .15s"}}>
-                    {/* Match bar */}
-                    <div style={{height:5,background:S.bg}}>
-                      <div style={{height:"100%",width:`${recipe.match_score}%`,background:matchColor(recipe.match_score),transition:"width .6s",borderRadius:"0 99px 99px 0"}}/>
-                    </div>
-                    <div style={{padding:"16px 18px"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-                        <div style={{flex:1,marginRight:10}}>
-                          <h3 style={{fontSize:15,fontWeight:800,margin:"0 0 5px",color:S.text,letterSpacing:"-.01em"}}>{recipe.name}</h3>
-                          <Tag color={S.orange}>{recipe.cuisine}</Tag>
-                        </div>
-                        <div style={{background:recipe.match_score>=80?"#f0fdf4":recipe.match_score>=50?"#fffbeb":"#fef2f2",borderRadius:10,padding:"6px 10px",textAlign:"center",minWidth:54,border:`1px solid ${matchColor(recipe.match_score)}33`}}>
-                          <p style={{fontSize:18,fontWeight:800,color:matchColor(recipe.match_score),margin:0}}>{recipe.match_score}%</p>
-                          <p style={{fontSize:10,color:matchColor(recipe.match_score),margin:0,opacity:.7}}>match</p>
-                        </div>
-                      </div>
-                      {recipe.matching_ingredients.length > 0 && (
-                        <div style={{marginBottom:10,display:"flex",flexWrap:"wrap",gap:4}}>
-                          {recipe.matching_ingredients.map((ing,j) => (
-                            <span key={j} style={{fontSize:11,background:"#f0fdf4",border:"1px solid #bbf7d0",color:S.green,borderRadius:6,padding:"2px 8px",fontWeight:600}}>✓ {ing}</span>
-                          ))}
-                        </div>
-                      )}
-                      {recipe.missing_ingredients.length > 0 && (
-                        <div style={{marginBottom:12,display:"flex",flexWrap:"wrap",gap:4}}>
-                          {recipe.missing_ingredients.map((ing,j) => (
-                            <span key={j} style={{fontSize:11,background:S.bg,border:`1px solid ${S.border}`,color:S.text2,borderRadius:6,padding:"2px 8px"}}>{ing}</span>
-                          ))}
-                        </div>
-                      )}
-                      <button
-                        onClick={() => setVideoPanel({recipe:recipe.name, cuisine:recipe.cuisine, recipeObj:recipe})}
-                        style={{
-                          width:"100%",marginTop:4,
-                          background:`linear-gradient(135deg,${S.dark},${S.darker})`,
-                          border:"none",borderRadius:12,padding:"12px 16px",
-                          color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",
-                          fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,
-                          boxShadow:`0 4px 0 #0d0f18, 0 6px 16px rgba(0,0,0,.15)`,
-                        }}
-                      >
-                        <div style={{width:28,height:28,background:"linear-gradient(135deg,#ff0000,#cc0000)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 2px 0 #880000"}}>
-                          <span style={{color:"#fff",fontSize:11}}>▶</span>
-                        </div>
-                        Watch videos & send to cook
-                        <span style={{marginLeft:"auto",color:S.orange}}>→</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <RecipeFlow kitchenCode={kitchenCode} role="sister"/>
         )}
-      </div>
+
 
       {videoPanel && (
         <VideoSearchPanel
@@ -806,9 +695,9 @@ export default function App() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-        body { font-family: 'DM Sans', system-ui, sans-serif; background: ${S.bg}; -webkit-font-smoothing: antialiased; overflow-x: hidden; max-width: 100vw; }
-        html { overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+        html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100vw !important; }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: ${S.bg}; -webkit-font-smoothing: antialiased; }
         @keyframes spin { to { transform: rotate(360deg); } }
         input, textarea { user-select: text !important; -webkit-user-select: text !important; }
         a { text-decoration: none; }
