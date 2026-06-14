@@ -257,23 +257,29 @@ function RecipeCard({ recipe, onWatch }) {
           </div>
         )}
 
-        <button onClick={() => onWatch(recipe)} style={{
-          width:"100%",
-          background:`linear-gradient(135deg,${S.dark},${S.darker})`,
-          border:"none",borderRadius:12,padding:"13px 16px",
-          color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",
-          fontFamily:"inherit",display:"flex",alignItems:"center",gap:12,
-          boxShadow:`0 4px 0 #0d0f18, 0 6px 20px rgba(0,0,0,.15)`,
-        }}
-          onMouseDown={e=>{e.currentTarget.style.transform="translateY(3px)";e.currentTarget.style.boxShadow="0 1px 0 #0d0f18";}}
-          onMouseUp={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=`0 4px 0 #0d0f18, 0 6px 20px rgba(0,0,0,.15)`;}}
+        <a
+          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.name + " recipe")}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            width:"100%",display:"flex",alignItems:"center",gap:12,
+            background:`linear-gradient(135deg,${S.dark},${S.darker})`,
+            border:"none",borderRadius:12,padding:"13px 16px",
+            color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",
+            fontFamily:"inherit",textDecoration:"none",
+            boxShadow:`0 4px 0 #0d0f18, 0 6px 20px rgba(0,0,0,.15)`,
+            boxSizing:"border-box",
+          }}
         >
           <div style={{width:32,height:32,background:"linear-gradient(135deg,#ff0000,#cc0000)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 3px 0 #880000"}}>
             <span style={{color:"#fff",fontSize:13}}>▶</span>
           </div>
-          <span style={{flex:1,textAlign:"left"}}>Watch recipes on YouTube</span>
+          <div style={{flex:1,textAlign:"left"}}>
+            <p style={{margin:0,fontSize:14,fontWeight:700}}>Search on YouTube</p>
+            <p style={{margin:0,fontSize:11,opacity:.6,fontWeight:400}}>Opens YouTube app • then share back to KitchenAI</p>
+          </div>
           <span style={{color:S.orange,fontSize:16}}>→</span>
-        </button>
+        </a>
       </div>
     </div>
   );
