@@ -291,6 +291,74 @@ function PantryView({readOnly=false}) {
   );
 }
 
+/* ── SHARED VIDEO MODAL ──────────────────────────────────── */
+function SharedVideoModal({ video, kitchenCode, onClose }) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [recipeName, setRecipeName] = useState("");
+
+  const send = async () => {
+    if(!kitchenCode || sending) return;
+    setSending(true);
+    try {
+      await assignRecipe(kitchenCode, {
+        recipe_name: recipeName || "Recipe from YouTube",
+        youtube_url: video.url || `https://www.youtube.com/watch?v=${video.video_id}`,
+        youtube_title: video.title,
+        channel: "YouTube",
+      });
+      setSent(true);
+      setTimeout(() => { setSent(false); onClose(); }, 2000);
+    } catch(e) { console.error(e); }
+    finally { setSending(false); }
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20,backdropFilter:"blur(4px)"}}>
+      <div style={{background:"#fff",borderRadius:20,padding:"24px",width:"100%",maxWidth:400,boxShadow:"0 8px 0 #ccc, 0 16px 40px rgba(0,0,0,.3)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+          <div style={{width:44,height:44,background:"linear-gradient(135deg,#ff0000,#cc0000)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:"0 3px 0 #880000"}}>
+            <span style={{color:"#fff",fontSize:18}}>▶</span>
+          </div>
+          <div style={{flex:1,minWidth:0}}>
+            <p style={{fontSize:13,fontWeight:700,color:S.text,margin:0,lineHeight:1.3,
+              display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>
+              {video.title || "YouTube Video"}
+            </p>
+            <p style={{fontSize:11,color:S.text2,margin:"2px 0 0"}}>Shared from YouTube</p>
+          </div>
+        </div>
+
+        <p style={{fontSize:13,fontWeight:600,color:S.text,margin:"0 0 8px"}}>What recipe is this for?</p>
+        <input
+          value={recipeName}
+          onChange={e => setRecipeName(e.target.value)}
+          placeholder="e.g. Aloo Dum, Dal Tadka..."
+          style={{
+            width:"100%",padding:"12px 14px",borderRadius:10,
+            border:`1.5px solid ${recipeName ? S.orange : S.border}`,
+            fontSize:14,outline:"none",fontFamily:"inherit",
+            marginBottom:16,boxSizing:"border-box",
+          }}
+        />
+
+        {!kitchenCode ? (
+          <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:"12px 14px",marginBottom:14}}>
+            <p style={{fontSize:13,color:S.red,margin:0,fontWeight:600}}>⚠️ You need to be logged in as owner to send recipes to your cook.</p>
+          </div>
+        ) : null}
+
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onClose} style={{flex:1,padding:"12px",borderRadius:10,border:`1px solid ${S.border}`,background:"#fff",color:S.text2,fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>Cancel</button>
+          <OBtn onClick={send} disabled={!kitchenCode||sending||sent} color={sent?S.green:S.orange}>
+            {sent?"✓ Sent to cook!":sending?"Sending...":"Send to cook 👩‍🍳"}
+          </OBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── LANDING PAGE ─────────────────────────────────────────── */
 function LandingPage({onSister, onMaid}) {
   const [code, setCode] = useState("");
@@ -658,8 +726,25 @@ export default function App() {
   const [kitchenCode, setKitchenCode] = useState(null);
   const [creating, setCreating] = useState(false);
 
+  const [sharedVideo, setSharedVideo] = useState(null);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    
+    // Handle share target from YouTube
+    const sharedVid = params.get("shared_video");
+    const sharedTitle = params.get("shared_title");
+    const sharedUrl = params.get("shared_url");
+    if(sharedVid || sharedUrl) {
+      setSharedVideo({
+        video_id: sharedVid,
+        title: decodeURIComponent(sharedTitle || "YouTube Video"),
+        url: decodeURIComponent(sharedUrl || ""),
+      });
+      // Clean URL
+      window.history.replaceState({}, "", "/");
+    }
+
     const code = params.get("code");
     if(code) {
       setKitchenCode(code.toUpperCase());
@@ -725,6 +810,13 @@ export default function App() {
       {!role && <LandingPage onSister={handleSister} onMaid={handleMaid}/>}
       {role==="maid" && kitchenCode && <MaidInterface kitchenCode={kitchenCode} onLeave={handleLeave}/>}
       {role==="sister" && kitchenCode && <SisterInterface kitchenCode={kitchenCode} onLeave={handleLeave}/>}
+      {sharedVideo && (
+        <SharedVideoModal
+          video={sharedVideo}
+          kitchenCode={role==="sister" ? kitchenCode : null}
+          onClose={() => setSharedVideo(null)}
+        />
+      )}
     </>
   );
 }
