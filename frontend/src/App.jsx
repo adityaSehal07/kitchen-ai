@@ -696,7 +696,7 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
         html, body { overflow-x: hidden !important; width: 100% !important; max-width: 100vw !important; }
-        body { font-family: 'DM Sans', system-ui, sans-serif; background: ${S.bg}; -webkit-font-smoothing: antialiased; }
+        body { font-family: 'DM Sans', system-ui, sans-serif; background: #F5F5F5; -webkit-font-smoothing: antialiased; }
         @keyframes spin { to { transform: rotate(360deg); } }
         input, textarea { user-select: text !important; -webkit-user-select: text !important; }
         a { text-decoration: none; }
