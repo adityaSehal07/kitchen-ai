@@ -636,6 +636,7 @@ function SisterInterface({kitchenCode, onLeave}) {
           <RecipeFlow kitchenCode={kitchenCode} role="sister"/>
         )}
 
+      </div>
 
       {videoPanel && (
         <VideoSearchPanel
