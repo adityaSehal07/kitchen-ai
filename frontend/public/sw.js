@@ -1,6 +1,8 @@
-const CACHE = "kitchenai-v2";
+const CACHE = "kitchenai-v3";
+const STATIC = ["/", "/index.html"];
 
 self.addEventListener("install", e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC).catch(()=>{})));
   self.skipWaiting();
 });
 
@@ -12,32 +14,35 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  // Handle share target - redirect to main app with shared data
   const url = new URL(e.request.url);
-  if(url.pathname === "/share-target") {
+  
+  // Handle Web Share Target
+  if(url.searchParams.get("share") === "1") {
+    const title = url.searchParams.get("title") || "";
+    const text = url.searchParams.get("text") || "";
     const sharedUrl = url.searchParams.get("url") || "";
-    const sharedText = url.searchParams.get("text") || "";
-    const sharedTitle = url.searchParams.get("title") || "";
     
-    // Extract YouTube video ID from shared URL or text
-    const combined = sharedUrl + " " + sharedText;
-    const ytMatch = combined.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
-    const videoId = ytMatch ? ytMatch[1] : null;
+    // Extract YouTube video ID
+    const combined = title + " " + text + " " + sharedUrl;
+    const ytMatch = combined.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([a-zA-Z0-9_-]{11})/);
+    const videoId = ytMatch ? ytMatch[1] : "";
     
-    // Redirect to app with video info
-    const redirectUrl = `/?shared_video=${videoId || ""}&shared_title=${encodeURIComponent(sharedTitle)}&shared_url=${encodeURIComponent(sharedUrl)}`;
-    
-    e.respondWith(Response.redirect(redirectUrl, 303));
+    const redirectTo = `/?sv=${videoId}&st=${encodeURIComponent(title)}&su=${encodeURIComponent(sharedUrl)}`;
+    e.respondWith(Response.redirect(redirectTo, 303));
     return;
   }
-  
-  // Normal fetch - network first, fallback to cache
-  if(e.request.url.includes("/api/")) return;
+
+  // Skip API calls
+  if(url.pathname.startsWith("/api/")) return;
+
+  // Network first, cache fallback
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
+        if(res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
         return res;
       })
       .catch(() => caches.match(e.request))
